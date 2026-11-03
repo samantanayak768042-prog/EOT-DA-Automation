@@ -1,1 +1,1 @@
-web: uvicorn web_app:app --host 0.0.0.0 --port $PORT
+web: gunicorn web_app:app
