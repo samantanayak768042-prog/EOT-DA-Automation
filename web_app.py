@@ -466,7 +466,7 @@ def scan_candidate_projects(
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
