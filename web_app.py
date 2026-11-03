@@ -996,6 +996,7 @@ if __name__ == "__main__":
     import uvicorn
 
     port = int(os.environ.get("PORT", 8000))
-    print(f"Starting P6 EOT Toolkit Web App on http://127.0.0.1:{port}...")
-    uvicorn.run("web_app:app", host="127.0.0.1", port=port, reload=False)
+    host = "0.0.0.0"  # Must bind to 0.0.0.0 for Railway / any cloud host
+    print(f"Starting P6 EOT Toolkit Web App on http://{host}:{port}...")
+    uvicorn.run("web_app:app", host=host, port=port, reload=False)
 
