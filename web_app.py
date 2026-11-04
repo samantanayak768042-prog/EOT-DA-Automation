@@ -339,8 +339,16 @@ def inspect_database_details(db_path: str) -> dict:
     try:
         conn = sqlite3.connect(f"file:{os.path.abspath(db_path)}?mode=ro", uri=True)
         cur = conn.cursor()
+        # In Primavera P6 schema, project description/name is in the root PROJWBS node (WBS_NAME)
+        # while PROJ_SHORT_NAME is in PROJECT table.
         cur.execute(
-            "SELECT PROJ_ID, PROJ_SHORT_NAME, PROJ_NAME FROM PROJECT WHERE PROJECT_FLAG = 'Y' ORDER BY PROJ_SHORT_NAME"
+            """
+            SELECT p.PROJ_ID, p.PROJ_SHORT_NAME, COALESCE(w.WBS_NAME, p.PROJ_SHORT_NAME) AS PROJ_NAME
+            FROM PROJECT p
+            LEFT JOIN PROJWBS w ON p.PROJ_ID = w.PROJ_ID AND w.PROJ_NODE_FLAG = 'Y'
+            WHERE p.PROJECT_FLAG = 'Y'
+            ORDER BY p.PROJ_SHORT_NAME
+            """
         )
         rows = cur.fetchall()
         conn.close()
@@ -393,7 +401,12 @@ def scan_candidate_projects(
             target_names = sessions[0]["projects"]
             for name in target_names:
                 cur.execute(
-                    "SELECT PROJ_ID, PROJ_SHORT_NAME, PROJ_NAME FROM PROJECT WHERE PROJ_SHORT_NAME = ? AND PROJECT_FLAG = 'Y'",
+                    """
+                    SELECT p.PROJ_ID, p.PROJ_SHORT_NAME, COALESCE(w.WBS_NAME, p.PROJ_SHORT_NAME)
+                    FROM PROJECT p
+                    LEFT JOIN PROJWBS w ON p.PROJ_ID = w.PROJ_ID AND w.PROJ_NODE_FLAG = 'Y'
+                    WHERE p.PROJ_SHORT_NAME = ? AND p.PROJECT_FLAG = 'Y'
+                    """,
                     (name,),
                 )
                 row = cur.fetchone()
@@ -416,7 +429,12 @@ def scan_candidate_projects(
             source_task_codes = {r[0] for r in cur.fetchall() if r[0]}
 
             cur.execute(
-                "SELECT PROJ_ID, PROJ_SHORT_NAME, PROJ_NAME FROM PROJECT WHERE PROJECT_FLAG = 'Y' AND PROJ_SHORT_NAME != ?",
+                """
+                SELECT p.PROJ_ID, p.PROJ_SHORT_NAME, COALESCE(w.WBS_NAME, p.PROJ_SHORT_NAME)
+                FROM PROJECT p
+                LEFT JOIN PROJWBS w ON p.PROJ_ID = w.PROJ_ID AND w.PROJ_NODE_FLAG = 'Y'
+                WHERE p.PROJECT_FLAG = 'Y' AND p.PROJ_SHORT_NAME != ?
+                """,
                 (source_project,),
             )
             all_other = cur.fetchall()
@@ -439,7 +457,12 @@ def scan_candidate_projects(
             # For Export: all projects in database
             # For Deletion: all delay projects matching pattern
             cur.execute(
-                "SELECT PROJ_ID, PROJ_SHORT_NAME, PROJ_NAME FROM PROJECT WHERE PROJECT_FLAG = 'Y' ORDER BY PROJ_SHORT_NAME"
+                """
+                SELECT p.PROJ_ID, p.PROJ_SHORT_NAME, COALESCE(w.WBS_NAME, p.PROJ_SHORT_NAME)
+                FROM PROJECT p
+                LEFT JOIN PROJWBS w ON p.PROJ_ID = w.PROJ_ID AND w.PROJ_NODE_FLAG = 'Y'
+                WHERE p.PROJECT_FLAG = 'Y' ORDER BY p.PROJ_SHORT_NAME
+                """
             )
             all_projs = cur.fetchall()
             for pid, name, full_name in all_projs:
