@@ -225,6 +225,57 @@ function populateProjectDropdowns(projects) {
 /* ──────────────────────────────────────────────
    FILE UPLOAD
 ────────────────────────────────────────────── */
+async function uploadDatabase(file, zone) {
+  const info = zone.querySelector(".uploaded-info") || document.createElement("div");
+  info.className = "uploaded-info";
+  info.textContent = `⏳ Uploading ${file.name} to server…`;
+  if (!zone.contains(info)) zone.appendChild(info);
+
+  try {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/upload/db", { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Database upload failed");
+
+    State.dbPath = data.saved_path;
+    const inp = document.getElementById("inp-db-path");
+    if (inp) inp.value = data.saved_path;
+
+    if (data.inspect && data.inspect.connected) {
+      State.dbConnected = true;
+      updateDbStatusBar(data.inspect);
+      populateProjectDropdowns(data.inspect.projects);
+      info.textContent = `✓ ${data.filename} (${(data.size / 1024 / 1024).toFixed(2)} MB) — Connected! ${data.inspect.project_count} projects found`;
+      toast(`Connected: ${data.inspect.project_count} projects loaded from ${data.filename}`, "success");
+    } else {
+      info.textContent = `✓ ${data.filename} uploaded, but could not inspect: ${data.inspect?.error || "Unknown error"}`;
+      toast("Database uploaded, but connection check had an issue.", "warning");
+    }
+  } catch (e) {
+    info.textContent = `✗ Upload failed: ${e.message}`;
+    toast("Database upload failed: " + e.message, "error");
+  }
+}
+
+function setupDbDropzone() {
+  const zone = document.getElementById("upload-zone-db");
+  const input = document.getElementById("file-input-db");
+  if (!zone || !input) return;
+
+  zone.addEventListener("click", () => input.click());
+  zone.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("dragover"); });
+  zone.addEventListener("dragleave", () => zone.classList.remove("dragover"));
+  zone.addEventListener("drop", e => {
+    e.preventDefault();
+    zone.classList.remove("dragover");
+    if (e.dataTransfer.files[0]) uploadDatabase(e.dataTransfer.files[0], zone);
+  });
+  input.addEventListener("change", () => {
+    if (input.files[0]) uploadDatabase(input.files[0], zone);
+  });
+}
+
 function setupDropzone(zoneId, inputId, stateKey, nameKey, acceptLabel) {
   const zone = document.getElementById(zoneId);
   const input = document.getElementById(inputId);
@@ -747,6 +798,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Upload dropzones
+  setupDbDropzone();
   setupDropzone("upload-zone-excel",     "file-input-excel",     "uploadedExcelPath",     "uploadedExcelName",    ".xlsx");
   setupDropzone("upload-zone-milestone", "file-input-milestone", "uploadedMilestonePath", "uploadedMilestoneName", ".xlsx");
 

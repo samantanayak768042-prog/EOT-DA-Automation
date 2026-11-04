@@ -195,19 +195,37 @@
         <div class="card-body flex-col gap-3">
           <div class="alert alert-info">
             <span>ℹ️</span>
-            <span>Paste the full path to your Primavera P6 SQLite database file (usually <code>PPMDBSQLite.db</code>).</span>
+            <span>Upload your Primavera P6 SQLite database file (<code>.db</code>) directly from your computer, or specify a server path below.</span>
           </div>
+
+          <!-- Direct Database File Upload Dropzone -->
           <div class="form-group">
-            <label class="form-label required">Database File Path</label>
+            <label class="form-label">Upload SQLite Database File (.db)</label>
+            <div class="upload-zone" id="upload-zone-db" style="padding: 20px;">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#93c5fd" stroke-width="1.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+              <p>Drag & drop your <strong>.db</strong> file here (e.g. <code>EOT T3.db</code>), or <strong>click to browse</strong></p>
+              <div class="uploaded-info text-muted">No database file uploaded yet</div>
+            </div>
+            <input type="file" id="file-input-db" accept=".db,.sqlite,.sqlite3" />
+          </div>
+
+          <div style="display: flex; align-items: center; text-align: center; color: var(--text-muted); font-size: 11px; margin: 4px 0;">
+            <div style="flex: 1; border-bottom: 1px solid var(--border);"></div>
+            <span style="padding: 0 10px; font-weight: 600; text-transform: uppercase;">OR specify server path</span>
+            <div style="flex: 1; border-bottom: 1px solid var(--border);"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Database File Path on Server</label>
             <div class="flex gap-2">
               <input type="text" id="inp-db-path" class="form-control"
-                placeholder="e.g. C:\Primavera\PPMDBSQLite.db" />
+                placeholder="e.g. uploads/EOT T3.db or local server path" />
               <button class="btn btn-primary" id="btn-connect-db" onclick="connectDatabase()">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
                 Connect
               </button>
             </div>
-            <span class="form-hint">The database must be accessible from this machine (local or network path).</span>
+            <span class="form-hint">Use this if the database is already located on the server filesystem.</span>
           </div>
 
           <div class="db-status-bar" id="settings-db-status-bar">

@@ -518,6 +518,27 @@ async def get_dashboard_stats(db_path: Optional[str] = None):
 # ─────────────────────────────────────────────────────────────────────────────
 
 
+@app.post("/api/upload/db")
+async def upload_db_file(file: UploadFile = File(...)):
+    try:
+        dest_path = os.path.join(UPLOADS_DIR, file.filename)
+        # Avoid file collision or overwrite cleanly
+        with open(dest_path, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        # Inspect database immediately
+        inspect_res = inspect_database_details(dest_path)
+        return {
+            "success": True,
+            "filename": file.filename,
+            "saved_path": dest_path,
+            "size": os.path.getsize(dest_path),
+            "inspect": inspect_res,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database upload failed: {e}")
+
+
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):
     try:
